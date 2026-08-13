@@ -1,0 +1,26 @@
+{
+  "name": "POP MOTO Passageiro",
+  "short_name": "POP Passageiro",
+  "description": "Mobilidade urbana em Bauru — passageiro",
+  "start_url": "./POP-MOTO-Passageiro.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D0E15",
+  "theme_color": "#CCFF00",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
