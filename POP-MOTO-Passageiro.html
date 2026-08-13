@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#CCFF00"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<link rel="manifest" href="passageiro-manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<title>POP MOTO</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --lime:#CCFF00;--lime2:#D4FF1A;--purple:#6C2BD9;--purple2:#5B16C5;
+  --bg:#0B0C12;--card:#14151E;--elev:#1A1B27;--text:#FFFFFF;--muted:#9A9CAD;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea{ -webkit-user-select:text;user-select:text }
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  max-width:430px;margin:0 auto;position:relative;height:100dvh;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{pointer-events:none;-webkit-user-drag:none}
+
+/* ========== AUTH ========== */
+#auth{
+  position:fixed;inset:0;max-width:430px;margin:0 auto;z-index:300;
+  background:var(--bg);display:flex;flex-direction:column;
+  padding:0 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.auth-hero{
+  padding:48px 0 28px;text-align:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(108,43,217,.35),transparent 70%);
+}
+.auth-logo-wrap{
+  width:140px;height:140px;margin:0 auto 20px;position:relative;
+  animation:logoIn .9s cubic-bezier(.22,1,.36,1) both;
+}
+.auth-logo-wrap img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 28px rgba(204,255,0,.45))}
+.auth-logo-wrap::after{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:2px solid rgba(204,255,0,.25);animation:ring 2.4s ease-out infinite;
+}
+@keyframes logoIn{from{opacity:0;transform:scale(.7) translateY(20px)}to{opacity:1;transform:none}}
+@keyframes ring{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.35);opacity:0}}
+.auth-hero h1{font-size:22px;font-weight:800;margin-bottom:6px}
+.auth-hero p{color:var(--muted);font-size:14px}
+.auth-tabs{display:flex;background:var(--elev);border-radius:14px;padding:4px;margin-bottom:20px}
+.auth-tabs button{
+  flex:1;padding:12px;border-radius:11px;font-weight:700;font-size:14px;color:var(--muted);
+  transition:.2s;
+}
+.auth-tabs button.on{background:var(--lime);color:#0B0C12}
+.auth-field{
+  background:var(--elev);border:1.5px solid rgba(255,255,255,.06);
+  border-radius:14px;padding:4px 16px;margin-bottom:12px;
+  display:flex;align-items:center;gap:12px;min-height:56px;
+  transition:border-color .2s;
+}
+.auth-field:focus-within{border-color:var(--lime)}
+.auth-field svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:1.8;flex-shrink:0}
+.auth-field input{
+  flex:1;background:none;border:none;outline:none;color:#fff;font-size:15px;height:48px;
+}
+.auth-btn{
+  width:100%;height:56px;border-radius:999px;background:var(--lime);color:#0B0C12;
+  font-weight:800;font-size:16px;margin-top:8px;
+  box-shadow:0 8px 28px rgba(204,255,0,.3);
+}
+.auth-btn:disabled{opacity:.5}
+.auth-div{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--muted);font-size:12px}
+.auth-div::before,.auth-div::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+.auth-google{
+  width:100%;height:52px;border-radius:999px;background:#fff;color:#111;
+  font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.auth-err{
+  background:rgba(255,45,85,.12);color:#FF6B81;padding:12px 14px;border-radius:12px;
+  font-size:13px;margin-bottom:12px;display:none;
+}
+.auth-err.show{display:block}
+.auth-foot{padding:24px 0 40px;text-align:center;color:var(--muted);font-size:11px}
+
+/* ========== APP SHELL ========== */
+#app{display:none;height:100dvh;flex-direction:column;position:relative}
+#app.show{display:flex}
+
+/* Header lime */
+.app-header{
+  background:var(--lime);
+  background-image:radial-gradient(circle,rgba(0,0,0,.07) 1px,transparent 1px);
+  background-size:12px 12px;
+  padding:12px 16px 0;flex-shrink:0;position:relative;z-index:5;
+}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hdr-btn{
+  width:42px;height:42px;border-radius:50%;background:#0B0C12;display:flex;
+  align-items:center;justify-content:center;position:relative;
+}
+.hdr-btn svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+.hdr-btn .dot{
+  position:absolute;top:6px;right:6px;width:9px;height:9px;background:#FF2D55;
+  border-radius:50%;border:2px solid #0B0C12;display:none;
+}
+.hdr-btn .dot.on{display:block}
+.hdr-logo{height:36px;object-fit:contain}
+.hero{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  background:linear-gradient(125deg,#6C2BD9 0%,#4C1D95 100%);
+  border-radius:22px 22px 0 0;padding:18px 18px 22px;margin-top:4px;
+  position:relative;overflow:hidden;min-height:110px;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(-42deg,transparent,transparent 10px,rgba(204,255,0,.11) 10px,rgba(204,255,0,.11) 20px);
+  pointer-events:none;
+}
+.hero-text{position:relative;z-index:1;padding-bottom:4px}
+.hero-text h1{font-size:24px;font-weight:800;line-height:1.15}
+.hero-text p{font-size:13px;opacity:.92;margin-top:4px}
+.hero-img{
+  position:absolute;right:-4px;bottom:0;height:120px;width:auto;z-index:1;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.35));
+}
+
+/* Scroll body */
+.scroll{
+  flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  padding:0 0 calc(72px + var(--safe-b));background:var(--bg);
+}
+.map-card{
+  margin:0 16px;margin-top:-14px;position:relative;z-index:6;
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.45);
+  border:1px solid rgba(255,255,255,.06);
+}
+#map{height:180px;width:100%;background:#1a1a2e}
+.loc-card{
+  margin:12px 16px 0;background:var(--card);border-radius:18px;
+  padding:14px 14px 12px;border:1px solid rgba(255,255,255,.05);
+}
+.loc-row{display:flex;align-items:center;gap:12px;position:relative}
+.pin-o,.pin-d{
+  width:14px;height:14px;border-radius:50%;flex-shrink:0;
+  box-shadow:0 0 0 4px rgba(168,85,247,.2);
+}
+.pin-o{background:#A855F7}
+.pin-d{background:var(--lime);box-shadow:0 0 0 4px rgba(204,255,0,.2)}
+.loc-line{
+  width:2px;height:18px;margin:2px 0 2px 6px;
+  background:repeating-linear-gradient(#A855F7 0 3px,transparent 3px 6px);
+}
+.loc-row input{
+  flex:1;background:transparent;border:none;outline:none;color:#fff;
+  font-size:14px;font-weight:500;padding:8px 0;
+}
+.loc-row input::placeholder{color:var(--muted)}
+.btn-fav{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;margin-left:26px;
+  background:#0B0C12;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;
+}
+.btn-fav svg{width:14px;height:14px;fill:var(--lime);stroke:none}
+.pac-container{z-index:10000!important;border-radius:12px;font-family:Inter,sans-serif}
+
+.sec{padding:18px 16px 8px;font-size:16px;font-weight:800}
+.sec span{color:var(--lime)}
+.cats{
+  display:flex;gap:12px;overflow-x:auto;padding:4px 16px 12px;
+  scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+}
+.cats::-webkit-scrollbar{display:none}
+.cat{
+  min-width:132px;scroll-snap-align:start;background:var(--card);
+  border:2px solid rgba(255,255,255,.06);border-radius:18px;padding:12px;
+  position:relative;transition:.2s;
+}
+.cat.on{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime)}
+.cat-badge{
+  position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;
+  background:var(--elev);display:flex;align-items:center;justify-content:center;font-size:12px;
+}
+.cat.on .cat-badge{background:var(--lime);color:#111}
+.cat-img{height:72px;display:flex;align-items:center;justify-content:center;font-size:48px;
+  filter:drop-shadow(0 4px 12px rgba(108,43,217,.4))}
+.cat-name{font-weight:800;font-size:14px;margin-top:4px}
+.cat-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.cat-price{font-weight:800;color:var(--lime);font-size:15px;margin-top:6px}
+
+.pay-bar{
+  margin:4px 16px 12px;background:linear-gradient(90deg,#6C2BD9,#5B16C5);
+  border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;
+  font-size:12px;
+}
+.pay-bar .half{flex:1;display:flex;align-items:center;gap:8px}
+.pay-bar .div{width:1px;height:28px;background:rgba(255,255,255,.2)}
+.pay-bar strong{display:block;font-size:12px}
+.pay-bar span{opacity:.8;font-size:11px}
+
+.btn-call{
+  margin:0 16px 20px;height:58px;border-radius:999px;background:var(--lime);
+  color:#0B0C12;font-weight:900;font-size:17px;letter-spacing:.3px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 10px 32px rgba(204,255,0,.35);position:relative;
+}
+.btn-call .arr{
+  position:absolute;right:8px;width:44px;height:44px;border-radius:50%;
+  background:#0B0C12;color:var(--lime);display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:16px;
+}
+.btn-call:disabled{opacity:.55}
+
+/* Bottom nav */
+.bnav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;
+  background:rgba(20,21,30,.96);backdrop-filter:blur(16px);
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;padding:8px 8px calc(8px + var(--safe-b));z-index:40;
+}
+.bnav button{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:6px;color:var(--muted);font-size:10px;font-weight:600;
+}
+.bnav button.on{color:var(--lime)}
+.bnav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+
+/* Views */
+.view{display:none}.view.on{display:block}
+.page{padding:20px 16px calc(90px + var(--safe-b))}
+.page h2{font-size:22px;font-weight:800;margin-bottom:16px}
+
+/* Overlays */
+.ov{
+  position:fixed;inset:0;max-width:430px;margin:0 auto;z-index:100;
+  background:var(--bg);display:none;flex-direction:column;
+}
+.ov.open{display:flex}
+.ov-map{flex:1;min-height:45%}
+.ov-sheet{
+  background:var(--card);border-radius:24px 24px 0 0;padding:20px 18px calc(20px + var(--safe-b));
+  max-height:50%;overflow-y:auto;
+}
+.search-pulse{
+  width:72px;height:72px;margin:0 auto 12px;border-radius:50%;
+  border:3px solid var(--lime);display:flex;align-items:center;justify-content:center;
+  font-size:30px;animation:pulse 1.3s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(204,255,0,.45)}50%{box-shadow:0 0 0 16px transparent}}
+
+.ride-item{
+  background:var(--card);border-radius:16px;padding:14px;margin-bottom:10px;
+  border:1px solid rgba(255,255,255,.05);
+}
+.st{font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px}
+.st-pending{background:rgba(251,191,36,.15);color:#FBBF24}
+.st-accepted,.st-in_progress{background:rgba(0,230,118,.12);color:#00E676}
+.st-completed{background:rgba(204,255,0,.12);color:var(--lime)}
+.st-cancelled{background:rgba(255,45,85,.12);color:#FF6B81}
+
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#1E1F2A;color:#fff;padding:12px 18px;border-radius:14px;font-size:13px;
+  font-weight:600;z-index:200;opacity:0;transition:.3s;border:1px solid rgba(204,255,0,.25);
+  max-width:90%;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+.drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:80;display:none}
+.drawer-bg.open{display:block}
+.drawer{
+  position:fixed;top:0;left:0;bottom:0;width:280px;max-width:82%;z-index:90;
+  background:var(--card);padding:28px 16px;transform:translateX(-105%);transition:.28s cubic-bezier(.22,1,.36,1);
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:none}
+.drawer button{
+  display:flex;align-items:center;gap:12px;padding:14px 12px;border-radius:12px;
+  font-size:15px;font-weight:600;width:100%;text-align:left;color:#fff;
+}
+.drawer button:active{background:rgba(255,255,255,.06)}
+.drawer svg{width:20px;height:20px;stroke:var(--lime);fill:none;stroke-width:1.8}
+
+.modal{
+  position:fixed;inset:0;max-width:430px;margin:0 auto;z-index:150;
+  background:rgba(0,0,0,.7);display:none;align-items:flex-end;
+}
+.modal.open{display:flex}
+.sheet{
+  width:100%;background:var(--card);border-radius:24px 24px 0 0;
+  padding:20px 18px calc(24px + var(--safe-b));max-height:88%;overflow-y:auto;
+}
+.chat-box{height:220px;overflow-y:auto;background:var(--elev);border-radius:14px;padding:12px;margin:10px 0}
+.bubble{max-width:82%;padding:10px 12px;border-radius:14px;font-size:13px;margin-bottom:8px;line-height:1.35}
+.bubble.me{margin-left:auto;background:var(--purple)}
+.bubble.them{background:#2A2D3E}
+.ongoing{
+  margin:12px 16px 0;background:linear-gradient(135deg,#6C2BD9,#4C1D95);
+  border-radius:16px;padding:14px;border:1px solid rgba(204,255,0,.3);cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-hero">
+    <div class="auth-logo-wrap">
+      <img src="logoprincipal.png" alt="POP MOTO" onerror="this.parentElement.innerHTML='<div style=font-size:42px;font-weight:900;font-style:italic;color:var(--lime)>POP</div>'"/>
+    </div>
+    <h1>Bem-vindo à POP MOTO</h1>
+    <p>Mobilidade urbana em Bauru</p>
+  </div>
+  <div class="auth-err" id="auth-err"></div>
+  <div class="auth-tabs">
+    <button type="button" class="on" data-mode="login">Entrar</button>
+    <button type="button" data-mode="register">Criar conta</button>
+  </div>
+  <form id="form-login">
+    <div class="auth-field">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <input type="email" id="login-email" placeholder="Seu e-mail" required autocomplete="email"/>
+    </div>
+    <div class="auth-field">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      <input type="password" id="login-pass" placeholder="Senha" required autocomplete="current-password"/>
+    </div>
+    <button class="auth-btn" type="submit">Entrar</button>
+  </form>
+  <form id="form-reg" style="display:none">
+    <div class="auth-field"><input type="text" id="reg-name" placeholder="Nome completo" required/></div>
+    <div class="auth-field"><input type="email" id="reg-email" placeholder="E-mail" required/></div>
+    <div class="auth-field"><input type="tel" id="reg-phone" placeholder="(14) 99999-0000"/></div>
+    <div class="auth-field"><input type="password" id="reg-pass" placeholder="Senha (mín. 6 caracteres)" required minlength="6"/></div>
+    <button class="auth-btn" type="submit">Criar minha conta</button>
+  </form>
+  <div class="auth-div">ou</div>
+  <button type="button" class="auth-google" id="btn-google">
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    Continuar com Google
+  </button>
+  <div class="auth-foot">Ao continuar, você concorda com os termos da POP MOTO</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="drawer-bg" id="drawer-bg"></div>
+  <nav class="drawer" id="drawer">
+    <img src="logoprincipal.png" alt="" style="height:40px;margin-bottom:24px;object-fit:contain" onerror="this.style.display='none'"/>
+    <button data-view="home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Início</button>
+    <button data-view="rides"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Corridas</button>
+    <button data-view="wallet"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Carteira</button>
+    <button data-view="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil</button>
+    <button id="btn-logout" style="margin-top:auto;color:#FF6B81"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sair</button>
+  </nav>
+
+  <div class="view on" id="view-home" style="display:flex;flex-direction:column;height:100%">
+    <header class="app-header">
+      <div class="hdr-top">
+        <button class="hdr-btn" id="btn-menu" aria-label="Menu"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <img class="hdr-logo" src="logoprincipal.png" alt="POP MOTO" onerror="this.outerHTML='<span style=font-weight:900;font-style:italic;color:#0B0C12;font-size:22px>POP MOTO</span>'"/>
+        <button class="hdr-btn" id="btn-notifs" aria-label="Notificações">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="dot" id="notif-dot"></span>
+        </button>
+      </div>
+      <div class="hero">
+        <div class="hero-text">
+          <h1 id="greet">Olá!</h1>
+          <p>Para onde vamos hoje? 👋</p>
+        </div>
+        <img class="hero-img" src="motorista.png" alt="" onerror="this.style.display='none'"/>
+      </div>
+    </header>
+
+    <div class="scroll">
+      <div class="ongoing" id="ongoing" style="display:none">
+        <strong style="display:block;margin-bottom:4px">Corrida em andamento</strong>
+        <span style="font-size:12px;opacity:.9" id="ongoing-txt">Toque para abrir</span>
+      </div>
+      <div class="map-card"><div id="map"></div></div>
+      <div class="loc-card">
+        <div class="loc-row">
+          <div class="pin-o"></div>
+          <input id="origin" placeholder="De onde vamos sair?" autocomplete="off"/>
+        </div>
+        <div class="loc-line"></div>
+        <div class="loc-row">
+          <div class="pin-d"></div>
+          <input id="dest" placeholder="Para onde vamos?" autocomplete="off"/>
+        </div>
+        <button type="button" class="btn-fav" id="btn-fav"><svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg> Favoritos</button>
+      </div>
+
+      <div class="sec">Escolha sua <span>Pop</span></div>
+      <div class="cats">
+        <div class="cat on" data-cat="pop15" data-price="15" data-name="Pop 15">
+          <div class="cat-badge">⚡</div>
+          <div class="cat-img">🏍️</div>
+          <div class="cat-name">Pop 15</div>
+          <div class="cat-desc">Qualquer bairro · Bauru</div>
+          <div class="cat-price">R$ 15,00</div>
+        </div>
+        <div class="cat" data-cat="entrega" data-price="9.9" data-name="Pop Entrega">
+          <div class="cat-badge">📦</div>
+          <div class="cat-img">📦</div>
+          <div class="cat-name">Pop Entrega</div>
+          <div class="cat-desc">Entrega rápida</div>
+          <div class="cat-price">R$ 9,90</div>
+        </div>
+      </div>
+
+      <div class="pay-bar">
+        <div class="half"><span style="font-size:16px">%</span><div><strong>Tem um cupom?</strong><span>Toque para adicionar</span></div></div>
+        <div class="div"></div>
+        <div class="half"><span style="font-size:16px">💳</span><div><strong>Pagamento</strong><span>Direto ao motorista</span></div></div>
+      </div>
+
+      <button class="btn-call" id="btn-call">CHAMAR POP<span class="arr">≫</span></button>
+    </div>
+  </div>
+
+  <div class="view" id="view-rides"><div class="page"><h2>Minhas Corridas</h2><div id="rides-list"></div></div></div>
+  <div class="view" id="view-wallet"><div class="page" style="text-align:center;padding-top:60px"><div style="font-size:48px">💳</div><h2>Em breve</h2><p style="color:var(--muted)">Pagamento direto ao motorista</p></div></div>
+  <div class="view" id="view-profile"><div class="page">
+    <h2>Perfil</h2>
+    <div style="text-align:center;background:var(--card);border-radius:18px;padding:24px;margin-bottom:16px">
+      <div id="pf-av" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--lime),#84cc16);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#111">P</div>
+      <strong id="pf-name">—</strong>
+      <div style="color:var(--muted);font-size:13px;margin-top:4px" id="pf-email">—</div>
+      <div style="color:var(--muted);font-size:13px" id="pf-phone">—</div>
+    </div>
+    <button class="auth-btn" id="btn-support" style="margin-bottom:10px;background:var(--elev);color:#fff;box-shadow:none">Suporte</button>
+    <button class="auth-btn" id="btn-logout2" style="background:transparent;border:1px solid rgba(255,255,255,.15);color:#FF6B81;box-shadow:none">Sair</button>
+  </div></div>
+
+  <nav class="bnav">
+    <button class="on" data-view="home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Início</button>
+    <button data-view="rides"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Corridas</button>
+    <button data-view="wallet"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Carteira</button>
+    <button data-view="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil</button>
+  </nav>
+</div>
+
+<!-- SEARCH -->
+<div class="ov" id="search-ov">
+  <div class="ov-map" id="search-map"></div>
+  <div class="ov-sheet">
+    <div class="search-pulse">🏍️</div>
+    <h3 style="text-align:center;font-weight:800;margin-bottom:6px">Buscando motorista...</h3>
+    <p id="search-timer" style="text-align:center;color:var(--lime);font-weight:800;font-size:20px">00:00</p>
+    <p id="search-info" style="text-align:center;color:var(--muted);font-size:12px;margin:8px 0 16px"></p>
+    <button class="auth-btn" id="btn-cancel-search" style="background:#2A2D3E;color:#fff;box-shadow:none">Cancelar</button>
+  </div>
+</div>
+
+<!-- ACTIVE -->
+<div class="ov" id="active-ov">
+  <div class="ov-map" id="track-map"></div>
+  <div class="ov-sheet">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+      <div id="act-photo" style="width:56px;height:56px;border-radius:50%;background:var(--lime);color:#111;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;overflow:hidden;flex-shrink:0">M</div>
+      <div>
+        <strong id="act-name">Motorista</strong>
+        <div style="font-size:12px;color:var(--muted)" id="act-vehicle">—</div>
+        <div style="font-size:12px;color:var(--lime);font-weight:700" id="act-eta">A caminho</div>
+      </div>
+    </div>
+    <div style="font-size:13px;margin-bottom:12px" id="act-route"></div>
+    <div style="display:flex;gap:8px">
+      <button class="auth-btn" id="btn-msg-driver" style="flex:1;height:48px;font-size:13px">Mensagem</button>
+      <button class="auth-btn" id="btn-msg-sup" style="flex:1;height:48px;font-size:13px;background:#2A2D3E;color:#fff;box-shadow:none">Suporte</button>
+    </div>
+    <button class="auth-btn" id="btn-cancel-active" style="margin-top:8px;height:44px;font-size:13px;background:transparent;border:1px solid rgba(255,255,255,.15);color:#fff;box-shadow:none">Cancelar corrida</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-chat"><div class="sheet">
+  <h3 id="chat-title" style="font-weight:800;margin-bottom:8px">Chat</h3>
+  <div class="chat-box" id="chat-box"></div>
+  <div style="display:flex;gap:8px">
+    <input id="chat-input" style="flex:1;background:var(--elev);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px;color:#fff;outline:none;font-size:14px" placeholder="Mensagem..."/>
+    <button class="auth-btn" id="chat-send" style="width:56px;height:48px;box-shadow:none">➤</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- Google Maps: substitua SUA_CHAVE pela chave da Google Cloud (Maps JavaScript API + Places) -->
+<script>
+window.GOOGLE_MAPS_KEY = localStorage.getItem('pop_gmaps_key') || 'SUA_CHAVE_GOOGLE_MAPS';
+</script>
+<script>
+function loadGoogleMaps(){
+  return new Promise((resolve,reject)=>{
+    if(window.google&&window.google.maps){resolve();return}
+    const k=window.GOOGLE_MAPS_KEY;
+    if(!k||k==='SUA_CHAVE_GOOGLE_MAPS'){reject(new Error('Configure a chave do Google Maps'));return}
+    const s=document.createElement('script');
+    s.src=`https://maps.googleapis.com/maps/api/js?key=${k}&libraries=places,geometry&language=pt-BR&region=BR`;
+    s.async=true;s.onload=()=>resolve();s.onerror=()=>reject(new Error('Falha ao carregar Google Maps'));
+    document.head.appendChild(s);
+  });
+}
+</script>
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyC4QScTShK_-kyH1i5eH1JqVxrbKqOKgqk",
+  authDomain:"pop-moto-bauru.firebaseapp.com",
+  projectId:"pop-moto-bauru",
+  storageBucket:"pop-moto-bauru.firebasestorage.app",
+  messagingSenderId:"983209292696",
+  appId:"1:983209292696:web:3a327fa86ea0377a1df1ed",
+  measurementId:"G-8N66B4C5EJ"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(), db=firebase.firestore();
+
+const CATS={
+  pop15:{id:'pop15',name:'Pop 15',price:15,label:'R$ 15,00'},
+  entrega:{id:'entrega',name:'Pop Entrega',price:9.9,label:'R$ 9,90'}
+};
+
+const S={
+  user:null,profile:null,cat:'pop15',ride:null,unsub:null,
+  map:null,searchMap:null,trackMap:null,
+  originAC:null,destAC:null,
+  originPlace:null,destPlace:null,
+  driverMarkers:{},driverUnsub:null,
+  trackDriverUnsub:null,trackPolyline:null,trackDriverMarker:null,trackPassengerMarker:null,
+  searchStart:0,searchTimer:null,chatRideId:null,supportId:null,mapsReady:false
+};
+
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function playLogoSound(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [523.25,659.25,783.99].forEach((f,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine';o.frequency.value=f;g.gain.value=0.07;
+      o.connect(g);g.connect(ctx.destination);
+      o.start(ctx.currentTime+i*0.12);o.stop(ctx.currentTime+i*0.12+0.18);
+    });
+  }catch{}
+}
+function beep(n=2){try{const c=new(window.AudioContext||window.webkitAudioContext);for(let i=0;i<n;i++){const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.08;o.start(c.currentTime+i*.2);o.stop(c.currentTime+i*.2+.12)}}catch{}}
+function successSound(){try{const c=new(window.AudioContext||window.webkitAudioContext);[523,659,784].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;g.gain.value=.1;o.start(c.currentTime+i*.11);o.stop(c.currentTime+i*.11+.14)})}catch{}}
+
+/* AUTH */
+let logoSoundPlayed=false;
+auth.onAuthStateChanged(async u=>{
+  if(u){
+    S.user=u;
+    $('#auth').style.display='none';
+    $('#app').classList.add('show');
+    try{const s=await db.collection('users').doc(u.uid).get();S.profile=s.exists?s.data():{}}catch{S.profile={}}
+    const name=(S.profile.name||u.displayName||'Passageiro').split(' ')[0];
+    const h=new Date().getHours();
+    $('#greet').textContent=(h<12?'Olá':h<18?'Olá':'Olá')+', '+name+'!';
+    $('#pf-name').textContent=S.profile.name||u.displayName||'—';
+    $('#pf-email').textContent=S.profile.email||u.email||'—';
+    $('#pf-phone').textContent=S.profile.phone||'—';
+    $('#pf-av').textContent=(name[0]||'P').toUpperCase();
+    initMapsAndUI();
+    checkActiveRide();
+  } else {
+    S.user=null;
+    $('#auth').style.display='flex';
+    $('#app').classList.remove('show');
+    if(!logoSoundPlayed){logoSoundPlayed=true;setTimeout(playLogoSound,400)}
+  }
+});
+
+$$('.auth-tabs button').forEach(b=>b.onclick=()=>{
+  $$('.auth-tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#form-login').style.display=b.dataset.mode==='login'?'block':'none';
+  $('#form-reg').style.display=b.dataset.mode==='register'?'block':'none';
+});
+$('#form-login').onsubmit=async e=>{
+  e.preventDefault();
+  try{await auth.signInWithEmailAndPassword($('#login-email').value,$('#login-pass').value)}
+  catch(err){$('#auth-err').textContent=err.message;$('#auth-err').classList.add('show')}
+};
+$('#form-reg').onsubmit=async e=>{
+  e.preventDefault();
+  try{
+    const cred=await auth.createUserWithEmailAndPassword($('#reg-email').value,$('#reg-pass').value);
+    await cred.user.updateProfile({displayName:$('#reg-name').value});
+    await db.collection('users').doc(cred.user.uid).set({
+      name:$('#reg-name').value,email:$('#reg-email').value,phone:$('#reg-phone').value||'',
+      role:'passenger',city:'Bauru',createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(err){$('#auth-err').textContent=err.message;$('#auth-err').classList.add('show')}
+};
+$('#btn-google').onclick=async()=>{
+  try{
+    const p=new firebase.auth.GoogleAuthProvider();
+    const cred=await auth.signInWithPopup(p);
+    const ref=db.collection('users').doc(cred.user.uid);
+    if(!(await ref.get()).exists) await ref.set({name:cred.user.displayName,email:cred.user.email,role:'passenger',city:'Bauru',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }catch(e){toast(e.message)}
+};
+async function doLogout(){await auth.signOut()}
+$('#btn-logout').onclick=$('#btn-logout2').onclick=doLogout;
+
+/* GOOGLE MAPS */
+async function initMapsAndUI(){
+  try{
+    await loadGoogleMaps();
+    S.mapsReady=true;
+  }catch(e){
+    console.warn(e);
+    toast('Configure a chave do Google Maps (Maps + Places)');
+    // still allow app without map
+    return;
+  }
+  const center={lat:-22.3149,lng:-49.0606};
+  S.map=new google.maps.Map($('#map'),{
+    center,zoom:14,disableDefaultUI:true,zoomControl:false,
+    styles:[{featureType:'poi',stylers:[{visibility:'off'}]}]
+  });
+  // Places Autocomplete with full address (street number)
+  const opts={
+    componentRestrictions:{country:'br'},
+    fields:['formatted_address','geometry','name','address_components','place_id'],
+    types:['address']
+  };
+  S.originAC=new google.maps.places.Autocomplete($('#origin'),opts);
+  S.destAC=new google.maps.places.Autocomplete($('#dest'),opts);
+  S.originAC.addListener('place_changed',()=>{
+    const p=S.originAC.getPlace();
+    if(!p.geometry) return;
+    S.originPlace=p;
+    S.map.panTo(p.geometry.location);
+    S.map.setZoom(16);
+  });
+  S.destAC.addListener('place_changed',()=>{
+    const p=S.destAC.getPlace();
+    if(!p.geometry) return;
+    S.destPlace=p;
+  });
+  // Bias to Bauru
+  const circle=new google.maps.Circle({center,radius:25000});
+  S.originAC.setBounds(circle.getBounds());
+  S.destAC.setBounds(circle.getBounds());
+
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const ll={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      S.map.setCenter(ll);
+      new google.maps.Marker({
+        map:S.map,position:ll,
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#A855F7',fillOpacity:1,strokeWeight:2,strokeColor:'#fff'}
+      });
+      // reverse geocode for origin
+      const geocoder=new google.maps.Geocoder();
+      geocoder.geocode({location:ll},(results,status)=>{
+        if(status==='OK'&&results[0]&&!$('#origin').value){
+          $('#origin').value=results[0].formatted_address;
+          S.originPlace={formatted_address:results[0].formatted_address,geometry:{location:new google.maps.LatLng(ll.lat,ll.lng)}};
+        }
+      });
+    },()=>{},{enableHighAccuracy:true});
+  }
+  listenDrivers();
+}
+
+function motoIcon(){
+  return{
+    path:'M12 2C8 2 5 6 5 10c0 5 7 12 7 12s7-7 7-12c0-4-3-8-7-8z',
+    fillColor:'#CCFF00',fillOpacity:1,strokeColor:'#6C2BD9',strokeWeight:2,scale:1.4,
+    anchor:new google.maps.Point(12,22)
+  };
+}
+function listenDrivers(){
+  if(S.driverUnsub) S.driverUnsub();
+  S.driverUnsub=db.collection('drivers').where('online','==',true).onSnapshot(snap=>{
+    if(!S.map||!S.mapsReady) return;
+    const seen={};
+    snap.docs.forEach(doc=>{
+      const d=doc.data(); seen[doc.id]=true;
+      const loc=d.location; if(!loc) return;
+      const lat=loc.latitude??loc.lat, lng=loc.longitude??loc.lng;
+      if(lat==null) return;
+      const pos={lat,lng};
+      if(S.driverMarkers[doc.id]){
+        S.driverMarkers[doc.id].setPosition(pos);
+      } else {
+        S.driverMarkers[doc.id]=new google.maps.Marker({
+          map:S.map,position:pos,title:d.name||'Motorista',
+          icon:{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="#CCFF00"/><text x="18" y="23" text-anchor="middle" font-size="16">🏍️</text></svg>`),
+            scaledSize:new google.maps.Size(36,36),anchor:new google.maps.Point(18,18)}
+        });
+      }
+    });
+    Object.keys(S.driverMarkers).forEach(id=>{
+      if(!seen[id]){S.driverMarkers[id].setMap(null);delete S.driverMarkers[id]}
+    });
+  });
+}
+
+/* CATEGORIES + CALL */
+$$('.cat').forEach(c=>c.onclick=()=>{
+  S.cat=c.dataset.cat;
+  $$('.cat').forEach(x=>x.classList.toggle('on',x===c));
+});
+
+$('#btn-call').onclick=async()=>{
+  if(S.ride&&['pending','accepted','arrived','in_progress'].includes(S.ride.status)){
+    toast('Você já tem uma corrida em andamento');
+    return openActive(S.ride);
+  }
+  const origin=$('#origin').value.trim(), dest=$('#dest').value.trim();
+  if(!origin||!dest){toast('Preencha origem e destino');return}
+  const cat=CATS[S.cat];
+  const originCoords=S.originPlace?.geometry?.location?{lat:S.originPlace.geometry.location.lat(),lng:S.originPlace.geometry.location.lng()}:null;
+  const destCoords=S.destPlace?.geometry?.location?{lat:S.destPlace.geometry.location.lat(),lng:S.destPlace.geometry.location.lng()}:null;
+  try{
+    const ref=await db.collection('rides').add({
+      category:cat.id,categoryName:cat.name,price:cat.price,priceLabel:cat.label,
+      origin,destination:dest,originCoords,destCoords,
+      status:'pending',passengerId:S.user.uid,
+      passengerName:S.profile?.name||S.user.displayName||'',
+      city:'Bauru',state:'SP',country:'Brasil',
+      paymentLabel:'Pagamento direto ao motorista',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    S.ride={id:ref.id,status:'pending',origin,destination:dest,price:cat.price,priceLabel:cat.label,categoryName:cat.name,originCoords,destCoords};
+    startSearch();
+    listenRide(ref.id);
+  }catch(e){toast(e.message||'Erro')}
+};
+
+function startSearch(){
+  $('#search-ov').classList.add('open');
+  S.searchStart=Date.now();
+  $('#search-info').textContent=(S.ride.categoryName||'')+' · '+(S.ride.priceLabel||'')+'\n'+S.ride.origin+' → '+S.ride.destination;
+  clearInterval(S.searchTimer);
+  S.searchTimer=setInterval(()=>{
+    const sec=Math.floor((Date.now()-S.searchStart)/1000);
+    $('#search-timer').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+  },400);
+  beep(3);
+  setTimeout(()=>{
+    if(!S.mapsReady) return;
+    const c=S.ride.originCoords||{lat:-22.3149,lng:-49.0606};
+    if(!S.searchMap){
+      S.searchMap=new google.maps.Map($('#search-map'),{center:c,zoom:14,disableDefaultUI:true,styles:[{featureType:'poi',stylers:[{visibility:'off'}]}]});
+    } else {
+      S.searchMap.setCenter(c);
+      google.maps.event.trigger(S.searchMap,'resize');
+    }
+  },350);
+}
+
+function listenRide(id){
+  if(S.unsub) S.unsub();
+  S.unsub=db.collection('rides').doc(id).onSnapshot(doc=>{
+    if(!doc.exists) return;
+    const r={id:doc.id,...doc.data()};
+    S.ride=r;
+    if(r.status==='accepted'||r.status==='arrived'||r.status==='in_progress'){
+      if($('#search-ov').classList.contains('open')) successSound();
+      openActive(r);
+    } else if(r.status==='completed'){
+      closeOv();toast('Corrida finalizada');S.ride=null;$('#ongoing').style.display='none';
+    } else if(r.status==='cancelled'){
+      closeOv();toast('Corrida cancelada');S.ride=null;$('#ongoing').style.display='none';
+    } else if(r.status==='pending'){
+      $('#ongoing').style.display='block';$('#ongoing-txt').textContent='Buscando motorista...';
+    }
+  });
+}
+
+function openActive(r){
+  $('#search-ov').classList.remove('open');
+  clearInterval(S.searchTimer);
+  $('#active-ov').classList.add('open');
+  const d=r.driver||{};
+  $('#act-name').textContent=d.name||'Motorista';
+  $('#act-vehicle').textContent=[d.vehicle,d.plate].filter(Boolean).join(' · ')||'—';
+  $('#act-route').textContent=(r.origin||'')+' → '+(r.destination||'');
+  $('#act-eta').textContent=r.status==='in_progress'?'Em viagem':'Motorista a caminho';
+  if(d.photoURL){ $('#act-photo').innerHTML='<img src="'+d.photoURL+'" style="width:100%;height:100%;object-fit:cover"/>'; }
+  else $('#act-photo').textContent=(d.name||'M')[0].toUpperCase();
+  $('#ongoing').style.display='block';
+  $('#ongoing-txt').textContent=(d.name||'Motorista')+' · '+(r.priceLabel||'');
+  setTimeout(()=>setupTrackMap(r),300);
+}
+
+function setupTrackMap(r){
+  if(!S.mapsReady) return;
+  const o=r.originCoords||{lat:-22.3149,lng:-49.0606};
+  if(!S.trackMap){
+    S.trackMap=new google.maps.Map($('#track-map'),{center:o,zoom:14,disableDefaultUI:true,styles:[{featureType:'poi',stylers:[{visibility:'off'}]}]});
+  } else {
+    google.maps.event.trigger(S.trackMap,'resize');
+  }
+  if(S.trackPassengerMarker) S.trackPassengerMarker.setMap(null);
+  S.trackPassengerMarker=new google.maps.Marker({
+    map:S.trackMap,position:o,
+    icon:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:'#A855F7',fillOpacity:1,strokeColor:'#fff',strokeWeight:2}
+  });
+  // Route to destination if available
+  if(r.destCoords){
+    const ds=new google.maps.DirectionsService();
+    const dr=new google.maps.DirectionsRenderer({map:S.trackMap,suppressMarkers:true,polylineOptions:{strokeColor:'#CCFF00',strokeWeight:5,strokeOpacity:.9}});
+    ds.route({origin:o,destination:r.destCoords,travelMode:google.maps.TravelMode.DRIVING},(res,status)=>{
+      if(status==='OK') dr.setDirections(res);
+    });
+  }
+  if(S.trackDriverUnsub) S.trackDriverUnsub();
+  if(r.driverId){
+    S.trackDriverUnsub=db.collection('drivers').doc(r.driverId).onSnapshot(ds=>{
+      if(!ds.exists) return;
+      const loc=ds.data().location; if(!loc) return;
+      const pos={lat:loc.latitude??loc.lat,lng:loc.longitude??loc.lng};
+      if(S.trackDriverMarker) S.trackDriverMarker.setPosition(pos);
+      else S.trackDriverMarker=new google.maps.Marker({
+        map:S.trackMap,position:pos,
+        icon:{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="18" fill="#CCFF00"/><text x="20" y="26" text-anchor="middle" font-size="18">🏍️</text></svg>`),scaledSize:new google.maps.Size(40,40)}
+      });
+      if(S.trackPolyline) S.trackPolyline.setMap(null);
+      S.trackPolyline=new google.maps.Polyline({
+        path:[pos,o],map:S.trackMap,strokeColor:'#CCFF00',strokeOpacity:0.85,strokeWeight:4,
+        icons:[{icon:{path:'M 0,-1 0,1',strokeOpacity:1,scale:3},offset:'0',repeat:'16px'}]
+      });
+      const bounds=new google.maps.LatLngBounds();bounds.extend(pos);bounds.extend(o);
+      S.trackMap.fitBounds(bounds,{top:40,bottom:40,left:40,right:40});
+      if(google.maps.geometry){
+        const km=google.maps.geometry.spherical.computeDistanceBetween(
+          new google.maps.LatLng(pos.lat,pos.lng),new google.maps.LatLng(o.lat,o.lng)
+        )/1000;
+        $('#act-eta').textContent=km.toFixed(1)+' km · ~'+Math.max(1,Math.round(km*4))+' min';
+      }
+    });
+  }
+}
+
+function closeOv(){
+  $('#search-ov').classList.remove('open');
+  $('#active-ov').classList.remove('open');
+  clearInterval(S.searchTimer);
+}
+async function cancelRide(){
+  if(!S.ride||!confirm('Cancelar corrida?')) return;
+  await db.collection('rides').doc(S.ride.id).update({status:'cancelled',cancelledBy:'passenger',updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  closeOv();S.ride=null;$('#ongoing').style.display='none';toast('Cancelada');
+}
+$('#btn-cancel-search').onclick=$('#btn-cancel-active').onclick=cancelRide;
+$('#ongoing').onclick=()=>{if(!S.ride)return;if(S.ride.status==='pending')startSearch();else openActive(S.ride)};
+
+async function checkActiveRide(){
+  try{
+    const snap=await db.collection('rides').where('passengerId','==',S.user.uid).where('status','in',['pending','accepted','arrived','in_progress']).limit(1).get();
+    if(!snap.empty){
+      const r={id:snap.docs[0].id,...snap.docs[0].data()};
+      S.ride=r;listenRide(r.id);
+      $('#ongoing').style.display='block';
+      $('#ongoing-txt').textContent=r.status==='pending'?'Buscando...':'Corrida ativa';
+    }
+  }catch(e){console.warn(e)}
+}
+
+/* RIDES */
+async function loadRides(){
+  const box=$('#rides-list');box.innerHTML='Carregando...';
+  try{
+    let rides=[];
+    try{const s=await db.collection('rides').where('passengerId','==',S.user.uid).orderBy('createdAt','desc').limit(40).get();rides=s.docs.map(d=>({id:d.id,...d.data()}))}
+    catch{const s=await db.collection('rides').where('passengerId','==',S.user.uid).limit(40).get();rides=s.docs.map(d=>({id:d.id,...d.data()}))}
+    const L={pending:'Buscando',accepted:'Aceita',in_progress:'Andamento',completed:'Concluída',cancelled:'Cancelada'};
+    box.innerHTML=rides.map(r=>`<div class="ride-item"><div style="display:flex;justify-content:space-between"><strong>${r.categoryName||'Pop'}</strong><span class="st st-${r.status}">${L[r.status]||r.status}</span></div><div style="font-size:12px;color:var(--muted);margin:6px 0">${r.origin||''} → ${r.destination||''}</div><div style="display:flex;justify-content:space-between;font-size:12px"><span>${fmt(r.createdAt)}</span><strong style="color:var(--lime)">${r.priceLabel||''}</strong></div></div>`).join('')||'<p style="color:var(--muted);text-align:center;padding:40px">Nenhuma corrida</p>';
+  }catch{box.innerHTML='Erro ao carregar'}
+}
+function fmt(ts){if(!ts)return'—';const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
+
+/* NAV */
+function view(id){
+  $$('.view').forEach(v=>{v.classList.remove('on');if(v.id!=='view-home')v.style.display='none'});
+  const el=$('#view-'+id);
+  if(el){el.classList.add('on');el.style.display=id==='home'?'flex':'block'}
+  $$('.bnav button').forEach(b=>b.classList.toggle('on',b.dataset.view===id));
+  closeDrawer();
+  if(id==='rides') loadRides();
+  if(id==='home'&&S.map) setTimeout(()=>google.maps.event.trigger(S.map,'resize'),200);
+}
+function openDrawer(){$('#drawer').classList.add('open');$('#drawer-bg').classList.add('open')}
+function closeDrawer(){$('#drawer').classList.remove('open');$('#drawer-bg').classList.remove('open')}
+$('#btn-menu').onclick=openDrawer;$('#drawer-bg').onclick=closeDrawer;
+$$('.drawer [data-view], .bnav [data-view]').forEach(b=>b.onclick=()=>view(b.dataset.view));
+
+/* CHAT */
+function openChat(rideId,title){
+  S.chatRideId=rideId;S.supportId=null;
+  $('#chat-title').textContent=title||'Chat';
+  $('#modal-chat').classList.add('open');
+  db.collection('rides').doc(rideId).collection('messages').orderBy('at').onSnapshot(s=>{
+    $('#chat-box').innerHTML=s.docs.map(d=>{const m=d.data();return `<div class="bubble ${m.from===S.user.uid?'me':'them'}">${m.text}</div>`}).join('');
+    $('#chat-box').scrollTop=9999;
+  });
+}
+$('#btn-msg-driver').onclick=()=>{if(S.ride) openChat(S.ride.id,'Motorista')};
+$('#btn-msg-sup').onclick=$('#btn-support').onclick=async()=>{
+  const ref=await db.collection('supportTickets').add({
+    userId:S.user.uid,userName:S.profile?.name||'',userEmail:S.user.email,role:'passenger',status:'queued',
+    messages:[{from:'system',text:'Você entrou na fila de atendimento.',at:new Date().toISOString()}],
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  S.supportId=ref.id;S.chatRideId=null;
+  $('#chat-title').textContent='Suporte POP MOTO';
+  $('#modal-chat').classList.add('open');
+  db.collection('supportTickets').doc(ref.id).onSnapshot(doc=>{
+    const msgs=doc.data()?.messages||[];
+    $('#chat-box').innerHTML=msgs.map(m=>`<div class="bubble ${m.from==='user'?'me':'them'}">${m.text}</div>`).join('');
+  });
+};
+$('#chat-send').onclick=async()=>{
+  const text=$('#chat-input').value.trim();if(!text)return;$('#chat-input').value='';
+  if(S.chatRideId) await db.collection('rides').doc(S.chatRideId).collection('messages').add({text,from:S.user.uid,role:'passenger',at:firebase.firestore.FieldValue.serverTimestamp()});
+  else if(S.supportId){
+    const ref=db.collection('supportTickets').doc(S.supportId);
+    const snap=await ref.get();const messages=snap.data()?.messages||[];
+    messages.push({from:'user',text,at:new Date().toISOString()});
+    await ref.update({messages});
+  }
+};
+$('#modal-chat').addEventListener('click',e=>{if(e.target.id==='modal-chat')e.target.classList.remove('open')});
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
